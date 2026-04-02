@@ -3,65 +3,41 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import h5py
 import numpy as np
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score, precision_recall_fscore_support, roc_auc_score, accuracy_score, confusion_matrix
 from pathlib import Path
 from tqdm import tqdm
 import pandas as pd
 
-#Load data
-h5_path = Path("training_features.h5")
+# Load data
+train_h5_path = Path("training_features.h5")
+test_h5_path = Path("testing_features.h5")
 
-with h5py.File(h5_path, "r") as f:
-    X = f["features"][:].astype(np.float32)
-    y = f["label"][:].astype(np.int64)
-    paths = f["path"][:].astype(str)
-    
-print(f"Loaded {len(X)} samples from {h5_path}")
+def load_h5_dataset(h5_path):
+    with h5py.File(h5_path, "r") as f:
+        features = f["features"][:].astype(np.float32)
+        labels = f["label"][:].astype(np.int64)
+        paths = f["path"][:].astype(str)
+    print(f"Loaded {len(features)} samples from {h5_path}")
+    return features, labels, paths
 
-#Balance classes (equal priors)
-idx_real = np.where(y == 1)[0]
-idx_fake = np.where(y == 0)[0]
 
-n_real = len(idx_real)
-n_fake = len(idx_fake)
-n_balanced = min(n_real, n_fake)
+X_train, y_train, paths_train = load_h5_dataset(train_h5_path)
+X_test, y_test, paths_test = load_h5_dataset(test_h5_path)
 
-#randomly sample equal numbers from each class
-rng = np.random.default_rng(seed=42)
-sel_real = rng.choice(idx_real, n_balanced, replace=False)
-sel_fake = rng.choice(idx_fake, n_balanced, replace=False)
 
-balanced_idx = np.concatenate([sel_real, sel_fake])
-assert len(balanced_idx) == len(np.unique(balanced_idx)), "Duplicate indices in balanced dataset!"
-rng.shuffle(balanced_idx)
+def standardize_features(X):
+    mean = X.mean(axis=0, keepdims=True)
+    std = X.std(axis=0, keepdims=True) + 1e-8
+    return (X - mean) / std, mean, std
 
-X_bal = X[balanced_idx]
-y_bal = y[balanced_idx]
-paths_bal = paths[balanced_idx]
 
-print(f"Balanced dataset size: {len(X_bal)} (real={n_balanced}, fake={n_balanced})")
+# Normalize each dataset independently
+X_train, train_mean, train_std = standardize_features(X_train)
+X_test, test_mean, test_std = standardize_features(X_test)
 
-#Stratified 50/50 train/test split
-X_train, X_test, y_train, y_test, paths_train, paths_test = train_test_split(
-    X_bal,
-    y_bal,
-    paths_bal,
-    test_size=0.5,
-    stratify=y_bal,
-    random_state=42
-)
-
-#Normalize (Fit on Train, Transform on Test)
-mean = X_train.mean(axis=0, keepdims=True)
-std = X_train.std(axis=0, keepdims=True) + 1e-8
-
-X_train = (X_train - mean) / std
-X_test = (X_test - mean) / std
-
-#Convert to tensors and datasets
+# Convert to tensors and datasets
 train_ds = TensorDataset(torch.from_numpy(X_train), torch.from_numpy(y_train))
-test_ds  = TensorDataset(torch.from_numpy(X_test), torch.from_numpy(y_test))
+test_ds = TensorDataset(torch.from_numpy(X_test), torch.from_numpy(y_test))
 
 #Create DataLoaders
 batch_size = 32
@@ -187,6 +163,8 @@ print("Confusion matrix (rows=true [0,1], cols=pred [0,1]):")
 print(cm)
 
 torch.save(model.state_dict(), "model.pt")
-np.save("mean.npy", mean)
-np.save("std.npy", std)
+np.save("train_mean.npy", train_mean)
+np.save("train_std.npy", train_std)
+np.save("test_mean.npy", test_mean)
+np.save("test_std.npy", test_std)
 np.save("best_tau.npy", best_tau)

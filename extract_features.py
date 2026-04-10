@@ -27,13 +27,13 @@ test_output_h5 = Path("testing_features.h5")
 
 def extract_features_to_h5(real_root, fake_root, output_h5, dataset_name="Dataset"):
     """
-    提取一個資料集（訓練或測試）的特徵並保存到.h5檔案
+    Extract features from a dataset (training or testing) and save to an .h5 file
     
     Args:
-        real_root: 真實影片的根目錄
-        fake_root: 虛假影片的根目錄
-        output_h5: 輸出.h5檔案路徑
-        dataset_name: 資料集名稱（用於日誌輸出）
+        real_root: Root directory of real videos
+        fake_root: Root directory of fake videos
+        output_h5: Path to the output .h5 file
+        dataset_name: Name of the dataset (for logging purposes)
     """
     real_videos = sorted(real_root.rglob("*.mp4"))
     fake_videos = sorted(fake_root.rglob("*.mp4"))
@@ -42,7 +42,7 @@ def extract_features_to_h5(real_root, fake_root, output_h5, dataset_name="Datase
     print(f"\n[{dataset_name}] Found {len(real_videos)} real and {len(fake_videos)} fake videos.")
     
     if len(all_videos) == 0:
-        print(f"[{dataset_name}] 沒有找到影片，跳過。")
+        print(f"[{dataset_name}] No videos found, skipping.")
         return
     
     with h5py.File(output_h5, "w") as h5f:
@@ -65,10 +65,14 @@ def extract_features_to_h5(real_root, fake_root, output_h5, dataset_name="Datase
                 label_ds[pos] = label
                 feat_ds[pos, :] = f
 
-    print(f"[{dataset_name}] 已保存 {len(all_videos)} 個影片的特徵到 {output_h5}")
+    print(f"[{dataset_name}] Saved features for {len(all_videos)} videos to {output_h5}")
 
-# 提取訓練資料集
-extract_features_to_h5(train_real_root, train_fake_root, train_output_h5, dataset_name="TRAINING")
 
-# 提取測試資料集
-extract_features_to_h5(test_real_root, test_fake_root, test_output_h5, dataset_name="TESTING")
+choice = input("Enter: \n1. Extract Training Data\n2. Extract Testing Data\n3. Extract All Data\nChoice: ")
+# Extract Training Data
+if choice == "1" or choice == "3":
+    extract_features_to_h5(train_real_root, train_fake_root, train_output_h5, dataset_name="TRAINING")
+
+# Extract Testing Data
+if choice == "2" or choice == "3":
+    extract_features_to_h5(test_real_root, test_fake_root, test_output_h5, dataset_name="TESTING")

@@ -55,6 +55,8 @@ def extract_features_to_h5(real_root, fake_root, output_h5, dataset_name="Datase
 
     print(f"[{dataset_name}] Saved features for {len(all_videos)} videos to {output_h5}")
 
-
-extract_features_to_h5(train_real_root, train_fake_root, train_output_h5, dataset_name="TRAINING")
-extract_features_to_h5(test_real_root, test_fake_root, test_output_h5, dataset_name="TESTING")
+choice = input("Enter: \n1. Extract Training Data\n2. Extract Testing Data\n3. Extract All Data\nChoice: ")
+if choice == "1" or choice == "3":
+    extract_features_to_h5(train_real_root, train_fake_root, train_output_h5, dataset_name="TRAINING")
+if choice == "2" or choice == "3":
+    extract_features_to_h5(test_real_root, test_fake_root, test_output_h5, dataset_name="TESTING")

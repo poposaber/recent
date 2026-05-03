@@ -69,13 +69,16 @@ print("Label distribution (test):", torch.bincount(torch.from_numpy(y_test)))
 #Train
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class MLP(nn.Module):
-    def __init__(self, in_dim=25, h1=64, h2=32):
+    def __init__(self, in_dim=25, h1=64, h2=32, dropout=0.5):
         super().__init__()
+        self.dropout = dropout
         self.net = nn.Sequential(
             nn.Linear(in_dim, h1),
             nn.ReLU(),
+            nn.Dropout(p=dropout),
             nn.Linear(h1, h2),
             nn.ReLU(),
+            nn.Dropout(p=dropout),
             nn.Linear(h2, 1)
         )
     def forward(self, x):
@@ -84,7 +87,9 @@ class MLP(nn.Module):
 in_dim = X_train.shape[1]
 print(f"Model input dimension: {in_dim}")
 
-model = MLP(in_dim=in_dim).to(device)
+dropout_rate = float(input("Enter dropout rate (e.g., 0.5): "))
+
+model = MLP(in_dim=in_dim, dropout=dropout_rate).to(device)
 criterion = nn.BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 

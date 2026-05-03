@@ -63,8 +63,8 @@ def extract_features_to_h5(real_root, fake_root, output_h5, dataset_name="Datase
 
     print(f"[{dataset_name}] Saved features for {len(all_videos)} videos to {output_h5}")
 
-dim = input("Enter feature dimension (21, 25, 31, 22, 8, 17, 13): ")
-if dim not in ["21", "25", "31", "22", "8", "17", "13"]:
+dim = input("Enter feature dimension (21, 25, 31, 22, 8, 17, 13, 1): ")
+if dim not in ["21", "25", "31", "22", "8", "17", "13", "1"]:
     print("Invalid dimension choice, terminating...")
     exit(1)
 

@@ -172,6 +172,11 @@ def features_from_Z(Z, dim=21):
             mu_t, mn_t, mx_t, var_t = moment4(t)
             stats = torch.stack([mu_d, mn_d, mx_d, var_d, mu_t, mn_t, mx_t, var_t], dim=1)
             return torch.cat([d3, t2, stats], dim=1)
+        case 1:
+            _, _, second_d = compute_temporal_geometry_with_second_d(Z)
+            _, _, _, var_second_d = moment4(second_d)
+            std_second_d = torch.sqrt(var_second_d)
+            return std_second_d.unsqueeze(1)
         case _:
             raise ValueError(f"Unsupported feature dimension: {dim}")
 
